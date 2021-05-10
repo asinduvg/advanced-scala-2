@@ -11,7 +11,7 @@ abstract class MyStream[+A] {
 
   def #::[B >: A](element: B): MyStream[B] // prepend operator
 
-  def ++[B >: A](anotherStream: MyStream[B]): MyStream[B] // concatenates two streams
+  def ++[B >: A](anotherStream: => MyStream[B]): MyStream[B] // concatenates two streams
 
   def foreach(f: A => Unit): Unit
 
@@ -48,7 +48,7 @@ object EmptyStream extends MyStream[Nothing] {
 
   def #::[B >: Nothing](element: B): MyStream[B] = new Cons[B](element, this) // prepend operator
 
-  def ++[B >: Nothing](anotherStream: MyStream[B]): MyStream[B] = anotherStream // concatenates two streams
+  def ++[B >: Nothing](anotherStream: => MyStream[B]): MyStream[B] = anotherStream // concatenates two streams
 
   def foreach(f: Nothing => Unit): Unit = ()
 
@@ -71,7 +71,7 @@ class Cons[+A](hd: A, tl: => MyStream[A]) extends MyStream[A] {
 
   def #::[B >: A](element: B): MyStream[B] = new Cons[B](element, this) // prepend operator
 
-  def ++[B >: A](anotherStream: MyStream[B]): MyStream[B] = new Cons[B](head, tail ++ anotherStream) // concatenates two streams
+  def ++[B >: A](anotherStream: => MyStream[B]): MyStream[B] = new Cons[B](head, tail ++ anotherStream) // concatenates two streams
 
   def foreach(f: A => Unit): Unit = {
     f(head)
@@ -111,7 +111,32 @@ object StreamsPlayground extends App {
   //  startFrom0.take(10000).foreach(println)
 
   // map, flatMap
-  println(startFrom0.map(_ * 2).take(100).toList())
-  println(startFrom0.flatMap(x => new Cons[Int](x, new Cons[Int](x + 1, EmptyStream))).take(10).toList())
+  //  println(startFrom0.map(_ * 2).take(100).toList())
+  //  println(startFrom0.flatMap(x => new Cons[Int](x, new Cons[Int](x + 1, EmptyStream))).take(10).toList())
+  //  println(startFrom0.filter(_ < 2).take(10).toList())
 
+  // Exercise on streams
+  // 1 - Stream of fibonacci numbers
+  // 2 - stream of prime numbers with Eratosthenes' sieve
+  /*
+    [2, 3, 4, ...]
+    filter out all numbers divisible by 2
+    [2, 3, 5, 7, 9, 11, ...]
+    filter out all numbers divisible by 3
+    [2, 3, 5, 7, 11, 13..]
+    filter out all numbers divisible by 5
+    ...
+   */
+
+  def fibonacci(first: Int, second: Int): MyStream[Int] = {
+    new Cons[Int](first, fibonacci(second, first + second))
+  }
+
+  def eratosthenes(numbers: MyStream[Int]): MyStream[Int] = {
+    if (numbers.isEmpty) numbers
+    else new Cons[Int](numbers.head, eratosthenes(numbers.tail.filter(_ % numbers.head != 0)))
+  }
+
+  //  println(fibonacci(1, 1).take(100).toList())
+  println(eratosthenes(MyStream.from(2)(_ + 1)).take(10).toList())
 }
