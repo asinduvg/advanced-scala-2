@@ -175,6 +175,7 @@ object ThreadCommunication extends App {
       var i = 0
 
       while (true) {
+
         buffer.synchronized {
 
           while (buffer.size == capacity) {
@@ -205,7 +206,82 @@ object ThreadCommunication extends App {
 
   }
 
-  multiProdCons(3, 3)
+  //  multiProdCons(3, 3)
+
+  /*
+    Exercises
+      1) think of an example where notifyAll acts in a different way than notify?
+      2) create a deadlock
+      3) create a livelock (threads are active, but they can't continue)
+   */
+
+  // notifyAll
+  def testNotifyAll(): Unit = {
+    val bell = new Object
+
+    (1 to 10).foreach(i => new Thread(() => {
+      bell.synchronized {
+        println(s"[thread $i] waiting...")
+        bell.wait()
+        println(s"[thread $i] hooray...")
+      }
+    }).start())
+
+    new Thread(() => {
+      Thread.sleep(2000)
+      println("[announcer] rock'n roll")
+      bell.synchronized {
+        bell.notifyAll()
+      }
+    }).start()
+
+  }
+
+  //  testNotifyAll()
+
+  // deadlock
+  case class Friend(name: String) {
+    def bow(other: Friend): Unit = {
+      this.synchronized {
+        println(s"$this: I am bowing to my friend $other")
+        other.rise(this)
+        println(s"$this: My friend $other has risen")
+      }
+    }
+
+    def rise(other: Friend): Unit = {
+      this.synchronized {
+        println(s"$this: I am rising to my friend $other")
+      }
+    }
+
+    // ex 3
+    var side = "right"
+
+    def switchSide(): Unit = {
+      if (side == "right") side = "left"
+      else side = "right"
+    }
+
+    def pass(other: Friend): Unit = {
+      while (this.side == other.side) {
+        println(s"$this: Oh please, $other, feel free to pass..")
+        switchSide()
+        Thread.sleep(1000)
+      }
+    }
+
+  }
+
+  val sam = Friend("Sam")
+  val pierre = Friend("Pierre")
+
+  //  new Thread(() => sam.bow(pierre)).start() // Sam's lock, then Pierre's lock
+  //  new Thread(() => pierre.bow(sam)).start() // Pierre's lock, then Sam's lock
+
+  // 3 - livelock
+  new Thread(() => sam.pass(pierre)).start()
+  new Thread(() => pierre.pass(sam)).start()
 
 }
 
