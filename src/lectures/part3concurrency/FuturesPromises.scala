@@ -1,7 +1,8 @@
 package lectures.part3concurrency
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future, Promise}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Random, Success}
 
 object FuturesPromises extends App {
@@ -102,5 +103,61 @@ object FuturesPromises extends App {
   }
 
   val fallbackResult = SocialNetwork.fetchProfile("unknown id").fallbackTo(SocialNetwork.fetchProfile("fb.id.0-dummy"))
+
+  // online banking app
+  case class User(name: String)
+
+  case class Transaction(sender: String, receiver: String, amount: Double, status: String)
+
+  object BankingApp {
+    val name = "Rock the JVM banking"
+
+    def fetchUser(name: String): Future[User] = Future {
+      // simulate fetching from the DB
+      Thread.sleep(500)
+      User(name)
+    }
+
+    def createTransaction(user: User, merchantName: String, amount: Double): Future[Transaction] = Future {
+      // simulate some processes (valid one etc.)
+      Thread.sleep(1000)
+      Transaction(user.name, merchantName, amount, "SUCCESS")
+    }
+
+    def purchase(username: String, item: String, merchantName: String, cost: Double): String = {
+      // fetch the user from the DB
+      // create a transaction
+      // WAIT for the transaction to finish
+      val transactionStatusFuture = for {
+        user <- fetchUser(username)
+        transaction <- createTransaction(user, merchantName, cost)
+      } yield transaction.status
+
+      Await.result(transactionStatusFuture, 2.seconds) // implicit conversions -> pimp my library
+    }
+  }
+
+  println(BankingApp.purchase("Asindu", "iPhone 12", "rock the jvm store", 3000))
+
+  // promises
+  val promise = Promise[Int]()
+  val future = promise.future
+
+  // thread 1 - "consumer"
+  future.onComplete {
+    case Success(r) => println("[Consumer] I've received " + r)
+  }
+
+  // thread2 - "producer"
+  val producer = new Thread(() => {
+    println("[producer] crunching numbers...")
+    Thread.sleep(1000)
+    // "fulfilling the promise"
+    promise.success(42)
+    println("[producer] done")
+  })
+
+  producer.start()
+  Thread.sleep(1000)
 
 }
