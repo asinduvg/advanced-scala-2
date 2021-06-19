@@ -29,7 +29,7 @@ object PimpMyLibrary extends App {
   }
 
   implicit class RicherInt(value: Int) {
-    def isOdd: Boolean = value % 2 == 1
+    def isOdd(): Boolean = value % 2 == 1
   }
 
   new RichInt(42).sqrt
@@ -44,7 +44,8 @@ object PimpMyLibrary extends App {
   3.seconds
 
   // compiler does do multiple implicit searches
-  println(42.isOdd)
+  println(42.isOdd())
+
 
   /*
     EXERCISE

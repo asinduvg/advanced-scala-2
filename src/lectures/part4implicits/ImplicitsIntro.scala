@@ -19,4 +19,7 @@ object ImplicitsIntro extends App {
 
   println(increment(15)) // NOT default args
 
+  println(increment(15)(30))
+
+
 }
