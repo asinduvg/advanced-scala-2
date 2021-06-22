@@ -11,6 +11,15 @@ public class JavaPlayground {
         MathWork mw = new MathWork();
         System.out.println(mw.isOdd(34));
 
+        HH hh = new HH() {
+            @Override
+            public void sample() {
+                System.out.println("hi");
+            }
+        };
+
+        hh.sample();
+
     }
 
 }
@@ -23,4 +32,8 @@ class MathWork {
     public boolean isOdd(Integer number) {
         return number % 2 != 0;
     }
+}
+
+abstract class HH {
+    abstract void sample();
 }
